@@ -9,17 +9,18 @@ st.set_page_config(
 
 st.markdown("""
     <style>
-    /* 特定のテキストエリアのクリックや選択を完全に無効化する */
+    /* 特定のテキストエリアのクリックや選択を無効化する */
     div[data-testid="stTextArea"] textarea[disabled] {
         -webkit-text-fill-color: #E0E0E0 !important; /* iPad用の文字色固定 */
         color: #E0E0E0 !important; /* 文字をハッキリした白に近い色に */
         opacity: 1 !important; /* 薄くなるのを防ぐ */
+        cursor: default !important;
     }
-    /* タップによる選択やカーソル移動を禁止 */
-    div[data-testid="stTextArea"] {
-        pointer-events: none;
-        user-select: none;
-        -webkit-user-select: none;
+    /* キーボード表示や文字選択を完全に禁止しつつ、スクロール（ドラッグ）だけを有効にする */
+    div[data-testid="stTextArea"] textarea {
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        -webkit-touch-callout: none !important;
     }
     </style>
 """, unsafe_allow_html=True)
