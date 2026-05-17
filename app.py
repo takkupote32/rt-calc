@@ -9,6 +9,10 @@ st.set_page_config(
 
 st.markdown("""
     <style>
+    #manage-app-button {
+        display: none !important;
+    }
+    
     /* 特定のテキストエリアのクリックや選択を無効化する */
     div[data-testid="stTextArea"] textarea[disabled] {
         -webkit-text-fill-color: #E0E0E0 !important; /* iPad用の文字色固定 */
