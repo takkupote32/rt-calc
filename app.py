@@ -306,9 +306,8 @@ with col2:
     # 計算内訳の表示
     full_formula_text = "\n".join(formula_list) + f"\n----------------------------\n合計点数: {base_pts:,} 点\n計算式: {base_pts:,}点 × 10円 × {ratio/10} = ¥{final_pay:,.0f}"
     st.caption("📋 計算内訳明細")
-# 改行コードをHTMLの改行（<br>）に変換して、枠の中に小さな文字で流し込む
-html_text = full_formula_text.replace('\n', '<br>')
-st.html(f'<div class="custom-detail-box">{html_text}</div>')
+    html_text = full_formula_text.replace('\n', '<br>')
+    st.html(f'<div class="custom-detail-box">{html_text}</div>')
 
     
     
@@ -427,9 +426,8 @@ if is_expanded:
         
         ex_full_txt = "\n".join(extra_formula_list) + f"\n----------------------------\n追加点数: {extra_pts:,} 点\n計算式: {extra_pts:,}点 × 10円 × {ratio/10} = ¥{extra_pay:,.0f}"
         st.caption("📋 追加分内訳明細")
-# 同じく改行を変換して小さな文字で流し込む
-ex_html_text = ex_full_txt.replace('\n', '<br>')
-st.html(f'<div class="custom-detail-box">{ex_html_text}</div>')
+        ex_html_text = ex_full_txt.replace('\n', '<br>')
+        st.html(f'<div class="custom-detail-box">{ex_html_text}</div>')
 
         
         
