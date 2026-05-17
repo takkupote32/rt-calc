@@ -7,8 +7,8 @@ st.set_page_config(
     layout="wide"
 )
 
-# ========================================================
-# 👇 【完全版】白・黒モード両対応 ＆ タップ選択禁止CSS
+ # ========================================================
+# 👇 【解決版】ダーク/ライトモードの文字色を完全個別に指定するCSS
 # ========================================================
 st.markdown("""
     <style>
@@ -22,22 +22,44 @@ st.markdown("""
         width: 0 !important;
     }
     
-    /* 2. テキストエリアの文字色をシステム（白・黒）に自動追従させる */
+    /* 2. 共通設定（文字の薄っぺらさを消し、スクロールを許可する） */
     div[data-testid="stTextArea"] textarea[disabled] {
-        -webkit-text-fill-color: inherit !important; /* iPadでもシステムの色を継承 */
-        color: inherit !important; /* 標準の文字色（白背景なら黒、黒背景なら白）に強制追従 */
-        opacity: 1 !important;     /* 薄くなる（カスケード化）のを完全に防止 */
+        opacity: 1 !important;
         cursor: default !important;
     }
-    
-    /* 3. キーボード表示や文字選択を禁止しつつ、スクロールだけを有効にする */
     div[data-testid="stTextArea"] textarea {
         user-select: none !important;
         -webkit-user-select: none !important;
         -webkit-touch-callout: none !important;
     }
+
+    /* 3. 🌗 【ダークモード（背景黒）】のときの文字色を「真っ白」に強制 */
+    @media (prefers-color-scheme: dark) {
+        div[data-testid="stTextArea"] textarea[disabled] {
+            -webkit-text-fill-color: #FFFFFF !important;
+            color: #FFFFFF !important;
+        }
+    }
+
+    /* 4. ☀️ 【ライトモード（背景白）】のときの文字色を「真っ黒」に強制 */
+    @media (prefers-color-scheme: light) {
+        div[data-testid="stTextArea"] textarea[disabled] {
+            -webkit-text-fill-color: #000000 !important;
+            color: #000000 !important;
+        }
+    }
     </style>
 """, unsafe_allow_html=True)
+# ========================================================
+# 👆 上書きここまで
+# ========================================================
+
+
+
+
+
+
+
 
 # 簡易計算機のロジック用セッション状態初期化
 if "calc_expr" not in st.session_state:
