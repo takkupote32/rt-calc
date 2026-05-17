@@ -7,8 +7,12 @@ st.set_page_config(
     layout="wide"
 )
 
+# ========================================================
+# 👇 【完全版】白・黒モード両対応 ＆ タップ選択禁止CSS
+# ========================================================
 st.markdown("""
     <style>
+    /* 1. 右下の「Manage app」が入っているフローティング要素を制御 */
     div[data-testid="stManageAppButton"],
     #manage-app-button {
         display: none !important;
@@ -18,14 +22,15 @@ st.markdown("""
         width: 0 !important;
     }
     
-    /* 特定のテキストエリアのクリックや選択を無効化する */
+    /* 2. テキストエリアの文字色をシステム（白・黒）に自動追従させる */
     div[data-testid="stTextArea"] textarea[disabled] {
-        -webkit-text-fill-color: #E0E0E0 !important; /* iPad用の文字色固定 */
-        color: #E0E0E0 !important; /* 文字をハッキリした白に近い色に */
-        opacity: 1 !important; /* 薄くなるのを防ぐ */
+        -webkit-text-fill-color: inherit !important; /* iPadでもシステムの色を継承 */
+        color: inherit !important; /* 標準の文字色（白背景なら黒、黒背景なら白）に強制追従 */
+        opacity: 1 !important;     /* 薄くなる（カスケード化）のを完全に防止 */
         cursor: default !important;
     }
-    /* キーボード表示や文字選択を完全に禁止しつつ、スクロール（ドラッグ）だけを有効にする */
+    
+    /* 3. キーボード表示や文字選択を禁止しつつ、スクロールだけを有効にする */
     div[data-testid="stTextArea"] textarea {
         user-select: none !important;
         -webkit-user-select: none !important;
