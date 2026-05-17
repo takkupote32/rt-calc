@@ -8,7 +8,7 @@ st.set_page_config(
 )
 
 # ========================================================
-# 👇 【最終微調整版】文字サイズ縮小 ＆ 枠内スクロール許可CSS
+# 👇 【文字サイズ極小版】文字をさらに小さく詰めるCSS
 # ========================================================
 st.markdown("""
     <style>
@@ -22,15 +22,17 @@ st.markdown("""
         width: 0 !important;
     }
     
-    /* 2. 内訳ボックス（st.info）の文字サイズを小さくし、行間を詰める */
+    /* 2. 内訳ボックス（st.info）の中の文字サイズを強制的に極小化 */
+    div[data-testid="stNotification"],
+    div[data-testid="stNotification"] *,
     div[data-testid="stNotification"] p {
-        font-size: 14px !important;       /* 文字の大きさを通常サイズに固定 */
-        line-height: 1.5 !important;      /* 行間を詰めてスッキリさせる */
+        font-size: 12px !important;       /* 文字をさらに小さく（12px） */
+        line-height: 1.3 !important;      /* 行間を限界まで詰める */
     }
     
     /* 3. 内訳ボックスの高さ制限とスクロール・選択禁止設定 */
     div[data-testid="stNotification"] {
-        max-height: 200px;
+        max-height: 180px;
         overflow-y: auto;
         user-select: none !important;
         -webkit-user-select: none !important;
@@ -41,6 +43,7 @@ st.markdown("""
 # ========================================================
 # 👆 上書きここまで
 # ========================================================
+
 
 
 
