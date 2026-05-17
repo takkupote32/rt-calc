@@ -8,7 +8,7 @@ st.set_page_config(
 )
 
 # ========================================================
-# 👇 【文字サイズ極小版】文字をさらに小さく詰めるCSS
+# 👇 【完全確定版】管理ボタン非表示 ＆ 内訳スクロール枠CSS
 # ========================================================
 st.markdown("""
     <style>
@@ -22,29 +22,39 @@ st.markdown("""
         width: 0 !important;
     }
     
-    /* 2. 内訳ボックス（st.info）の中の文字サイズを強制的に極小化 */
-    div[data-testid="stNotification"],
-    div[data-testid="stNotification"] *,
-    div[data-testid="stNotification"] p {
-        font-size: 12px !important;       /* 文字をさらに小さく（12px） */
-        line-height: 1.3 !important;      /* 行間を限界まで詰める */
-    }
-    
-    /* 3. 内訳ボックスの高さ制限とスクロール・選択禁止設定 */
-    div[data-testid="stNotification"] {
-        max-height: 180px;
+    /* 2. 自作の内訳ボックス用のデザイン設定（スクロール可能・選択禁止） */
+    .custom-detail-box {
+        max-height: 160px;
         overflow-y: auto;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 13px !important;       /* 文字を読みやすい通常サイズに固定 */
+        line-height: 1.4 !important;      /* 行間をスッキリ詰める */
         user-select: none !important;
         -webkit-user-select: none !important;
         -webkit-touch-callout: none !important;
+    }
+
+    /* 3. 🌗 ダークモード（背景黒）のときのボックス色 */
+    @media (prefers-color-scheme: dark) {
+        .custom-detail-box {
+            background-color: #1E1E24 !important;
+            color: #FFFFFF !important;
+        }
+    }
+
+    /* 4. ☀️ ライトモード（背景白）のときのボックス色 */
+    @media (prefers-color-scheme: light) {
+        .custom-detail-box {
+            background-color: #F0F2F6 !important;
+            color: #000000 !important;
+        }
     }
     </style>
 """, unsafe_allow_html=True)
 # ========================================================
 # 👆 上書きここまで
 # ========================================================
-
-
 
 
 
@@ -296,7 +306,12 @@ with col2:
     # 計算内訳の表示
     full_formula_text = "\n".join(formula_list) + f"\n----------------------------\n合計点数: {base_pts:,} 点\n計算式: {base_pts:,}点 × 10円 × {ratio/10} = ¥{final_pay:,.0f}"
     st.caption("📋 計算内訳明細")
-    st.info(full_formula_text)
+# 改行コードをHTMLの改行（<br>）に変換して、枠の中に小さな文字で流し込む
+html_text = full_formula_text.replace('\n', '<br>')
+st.html(f'<div class="custom-detail-box">{html_text}</div>')
+
+    
+    
 
     st.warning("⚠️ ※外来の場合、「外来放射線診療料（診察代）」が別途加算されます。\n\n※治療の進行状況やプラン変更により実際と異なる場合があります。")
 
@@ -412,7 +427,12 @@ if is_expanded:
         
         ex_full_txt = "\n".join(extra_formula_list) + f"\n----------------------------\n追加点数: {extra_pts:,} 点\n計算式: {extra_pts:,}点 × 10円 × {ratio/10} = ¥{extra_pay:,.0f}"
         st.caption("📋 追加分内訳明細")
-        st.info(ex_full_txt)
+# 同じく改行を変換して小さな文字で流し込む
+ex_html_text = ex_full_txt.replace('\n', '<br>')
+st.html(f'<div class="custom-detail-box">{ex_html_text}</div>')
+
+        
+        
         
         # 総合計の大きなカード風表示
         st.markdown("---")
