@@ -7,8 +7,8 @@ st.set_page_config(
     layout="wide"
 )
 
- # ========================================================
-# 👇 【解決版】ダーク/ライトモードの文字色を完全個別に指定するCSS
+# ========================================================
+# 👇 【完全解決版】Read-only制御による白黒完全対応CSS
 # ========================================================
 st.markdown("""
     <style>
@@ -22,30 +22,35 @@ st.markdown("""
         width: 0 !important;
     }
     
-    /* 2. 共通設定（文字の薄っぺらさを消し、スクロールを許可する） */
-    div[data-testid="stTextArea"] textarea[disabled] {
-        opacity: 1 !important;
+    /* 2. テキストエリア共通：枠線を消して、通常の文字と同じ見た目にする */
+    div[data-testid="stTextArea"] textarea {
         cursor: default !important;
+        border: none !important;
+        box-shadow: none !important;
     }
+    
+    /* 3. キーボード表示や文字選択を禁止しつつ、スクロールだけを有効にする */
     div[data-testid="stTextArea"] textarea {
         user-select: none !important;
         -webkit-user-select: none !important;
         -webkit-touch-callout: none !important;
     }
 
-    /* 3. 🌗 【ダークモード（背景黒）】のときの文字色を「真っ白」に強制 */
+    /* 4. 🌗 【ダークモード（背景黒）】のときの文字色を「真っ白」に強制 */
     @media (prefers-color-scheme: dark) {
-        div[data-testid="stTextArea"] textarea[disabled] {
+        div[data-testid="stTextArea"] textarea {
             -webkit-text-fill-color: #FFFFFF !important;
             color: #FFFFFF !important;
+            background-color: #262730 !important; /* ダーク用の背景に馴染ませる */
         }
     }
 
-    /* 4. ☀️ 【ライトモード（背景白）】のときの文字色を「真っ黒」に強制 */
+    /* 5. ☀️ 【ライトモード（背景白）】のときの文字色を「真っ黒」に強制 */
     @media (prefers-color-scheme: light) {
-        div[data-testid="stTextArea"] textarea[disabled] {
+        div[data-testid="stTextArea"] textarea {
             -webkit-text-fill-color: #000000 !important;
             color: #000000 !important;
+            background-color: #F0F2F6 !important; /* ライト用の見えやすい薄いグレー背景 */
         }
     }
     </style>
@@ -53,11 +58,6 @@ st.markdown("""
 # ========================================================
 # 👆 上書きここまで
 # ========================================================
-
-
-
-
-
 
 
 
@@ -306,7 +306,7 @@ with col2:
     
     # 計算内訳の表示
     full_formula_text = "\n".join(formula_list) + f"\n----------------------------\n合計点数: {base_pts:,} 点\n計算式: {base_pts:,}点 × 10円 × {ratio/10} = ¥{final_pay:,.0f}"
-    st.text_area("計算内訳明細", value=full_formula_text, height=180, disabled=True)
+    st.text_area("計算内訳明細", value=full_formula_text, height=180, read_only=True)
     
     st.warning("⚠️ ※外来の場合、「外来放射線診療料（診察代）」が別途加算されます。\n\n※治療の進行状況やプラン変更により実際と異なる場合があります。")
 
@@ -421,7 +421,7 @@ if is_expanded:
         st.metric(label="追加分概算金額", value=f"¥ {extra_pay:,.0f}")
         
         ex_full_txt = "\n".join(extra_formula_list) + f"\n----------------------------\n追加点数: {extra_pts:,} 点\n計算式: {extra_pts:,}点 × 10円 × {ratio/10} = ¥{extra_pay:,.0f}"
-        st.text_area("追加分内訳明細", value=ex_full_txt, height=120, key="ex_text_area", disabled=True)
+        st.text_area("追加分内訳明細", value=ex_full_txt, height=120, key="ex_text_area", read_only=True)
         
         # 総合計の大きなカード風表示
         st.markdown("---")
