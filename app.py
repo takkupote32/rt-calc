@@ -8,7 +8,7 @@ st.set_page_config(
 )
 
 # ========================================================
-# 👇 【完全確定版】管理ボタン非表示 ＆ 内訳スクロール枠CSS
+# 👇 【完全統一版】基本 ＆ 追加エリア両方の文字サイズ極小化CSS
 # ========================================================
 st.markdown("""
     <style>
@@ -22,8 +22,9 @@ st.markdown("""
         width: 0 !important;
     }
     
-    /* 2. 自作の内訳ボックス用のデザイン設定（スクロール可能・選択禁止） */
-    .custom-detail-box {
+    /* 2. 基本内訳・追加内訳、すべての自作ボックスを共通で小さくする */
+    .custom-detail-box,
+    [class*="custom-detail-box"] {
         max-height: 160px;
         overflow-y: auto;
         padding: 12px;
@@ -37,7 +38,8 @@ st.markdown("""
 
     /* 3. 🌗 ダークモード（背景黒）のときのボックス色 */
     @media (prefers-color-scheme: dark) {
-        .custom-detail-box {
+        .custom-detail-box,
+        [class*="custom-detail-box"] {
             background-color: #1E1E24 !important;
             color: #FFFFFF !important;
         }
@@ -45,7 +47,8 @@ st.markdown("""
 
     /* 4. ☀️ ライトモード（背景白）のときのボックス色 */
     @media (prefers-color-scheme: light) {
-        .custom-detail-box {
+        .custom-detail-box,
+        [class*="custom-detail-box"] {
             background-color: #F0F2F6 !important;
             color: #000000 !important;
         }
@@ -55,6 +58,7 @@ st.markdown("""
 # ========================================================
 # 👆 上書きここまで
 # ========================================================
+
 
 
 
