@@ -9,8 +9,15 @@ st.set_page_config(
 
 st.markdown("""
     <style>
-    #manage-app-button {
+    div[data-testid="stManageAppButton"],
+    #manage-app-button,
+    .stApp > div:last-child {
         display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
     }
     
     /* 特定のテキストエリアのクリックや選択を無効化する */
