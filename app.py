@@ -2,7 +2,7 @@ import streamlit as st
 
 # ページ全体の基本設定（ダークモード風のスタイル調整用）
 st.set_page_config(
-    page_title="放射線治療 診療報酬シミュレーター 2026",
+    page_markdown="放射線治療 診療報酬シミュレーター 2026",
     page_icon="⚛️",
     layout="wide"
 )
