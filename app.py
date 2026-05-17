@@ -8,7 +8,7 @@ st.set_page_config(
 )
 
 # ========================================================
-# 👇 【確定版】管理ボタン非表示 ＆ 枠内スクロール許可CSS
+# 👇 【最終微調整版】文字サイズ縮小 ＆ 枠内スクロール許可CSS
 # ========================================================
 st.markdown("""
     <style>
@@ -22,9 +22,15 @@ st.markdown("""
         width: 0 !important;
     }
     
-    /* 2. 内訳ボックス（st.info）の中にスクロールバーを表示させ、選択を禁止する */
+    /* 2. 内訳ボックス（st.info）の文字サイズを小さくし、行間を詰める */
+    div[data-testid="stNotification"] p {
+        font-size: 14px !important;       /* 文字の大きさを通常サイズに固定 */
+        line-height: 1.5 !important;      /* 行間を詰めてスッキリさせる */
+    }
+    
+    /* 3. 内訳ボックスの高さ制限とスクロール・選択禁止設定 */
     div[data-testid="stNotification"] {
-        max-height: 190px;
+        max-height: 200px;
         overflow-y: auto;
         user-select: none !important;
         -webkit-user-select: none !important;
@@ -35,6 +41,10 @@ st.markdown("""
 # ========================================================
 # 👆 上書きここまで
 # ========================================================
+
+
+
+
 
 
 # 簡易計算機のロジック用セッション状態初期化
