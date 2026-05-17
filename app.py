@@ -252,7 +252,7 @@ with col2:
     
     # 計算内訳の表示
     full_formula_text = "\n".join(formula_list) + f"\n----------------------------\n合計点数: {base_pts:,} 点\n計算式: {base_pts:,}点 × 10円 × {ratio/10} = ¥{final_pay:,.0f}"
-    st.text_area("計算内訳明細", value=full_formula_text, height=180)
+    st.text_area("計算内訳明細", value=full_formula_text, height=180, disabled=True)
     
     st.warning("⚠️ ※外来の場合、「外来放射線診療料（診察代）」が別途加算されます。\n\n※治療の進行状況やプラン変更により実際と異なる場合があります。")
 
