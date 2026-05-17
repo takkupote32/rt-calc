@@ -7,6 +7,23 @@ st.set_page_config(
     layout="wide"
 )
 
+st.markdown("""
+    <style>
+    /* 特定のテキストエリアのクリックや選択を完全に無効化する */
+    div[data-testid="stTextArea"] textarea[disabled] {
+        -webkit-text-fill-color: #E0E0E0 !important; /* iPad用の文字色固定 */
+        color: #E0E0E0 !important; /* 文字をハッキリした白に近い色に */
+        opacity: 1 !important; /* 薄くなるのを防ぐ */
+    }
+    /* タップによる選択やカーソル移動を禁止 */
+    div[data-testid="stTextArea"] {
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # 簡易計算機のロジック用セッション状態初期化
 if "calc_expr" not in st.session_state:
     st.session_state.calc_expr = ""
@@ -367,7 +384,7 @@ if is_expanded:
         st.metric(label="追加分概算金額", value=f"¥ {extra_pay:,.0f}")
         
         ex_full_txt = "\n".join(extra_formula_list) + f"\n----------------------------\n追加点数: {extra_pts:,} 点\n計算式: {extra_pts:,}点 × 10円 × {ratio/10} = ¥{extra_pay:,.0f}"
-        st.text_area("追加分内訳明細", value=ex_full_txt, height=120, key="ex_text_area")
+        st.text_area("追加分内訳明細", value=ex_full_txt, height=120, key="ex_text_area", disabled=True)
         
         # 総合計の大きなカード風表示
         st.markdown("---")
