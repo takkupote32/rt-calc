@@ -8,11 +8,39 @@ st.set_page_config(
 )
 
 # ========================================================
-# 👇 【iPad Safari超完全防御版】すべてのStreamlit標準UI要素、フッター、Fullscreenを徹底抹消するCSS
+# 👇 【iPad Safari絶対防御】最下部フッターとFullscreenを完全に消滅させるCSS
 # ========================================================
 st.markdown("""
     <style>
-    /* 1. 【超強力】右下の「Manage app」ボタンとその周辺パーツを強制非表示 */
+    /* 1. 最下部のフッター・白帯・Fullscreenボタンを親要素ごと完全に破壊・消失させる */
+    [data-testid="stAppDecoration"],
+    .stAppDecoration,
+    footer,
+    [data-testid="stFooter"],
+    #root > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div > div:last-child,
+    .stApp > div:last-child {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0px !important;
+        width: 0px !important;
+        max-height: 0px !important;
+        min-height: 0px !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        pointer-events: none !important;
+    }
+    
+    /* 2. 画面最下部に不自然な余白（スクロールの遊び）が残らないように画面を詰める */
+    .stApp3 {
+        margin-bottom: 0px !important;
+        padding-bottom: 0px !important;
+    }
+    .stMainBlockContainer {
+        padding-bottom: 2rem !important;
+    }
+
+    /* 3. 右下の「Manage app」ボタンを強制非表示 */
     [data-testid="stManageAppButton"],
     div[data-testid="stManageAppButton"],
     button[data-testid="stManageAppButton"],
@@ -23,32 +51,9 @@ st.markdown("""
         opacity: 0 !important;
         height: 0 !important;
         width: 0 !important;
-        position: absolute !important;
-        pointer-events: none !important;
-    }
-    
-    /* 2. 【超強力】Fullscreenボタン、 Built with Streamlitが入っているフッター（Decoration要素）を完全に抹消 */
-    .stAppDecoration,
-    footer,
-    [data-testid="stFooter"],
-    #root > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div > div:last-child {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        height: 0 !important;
-        width: 0 !important;
     }
 
-    /* 3. 【保険】右上のハンバーガーメニューなども非表示にする（embed=true時と同様の効果） */
-    [data-testid="stHeader"] {
-        background-color: rgba(0,0,0,0) !important;
-        color: rgba(0,0,0,0) !important;
-    }
-    header[data-testid="stHeader"] button {
-        visibility: hidden !important;
-    }
-
-    /* 4. 基本内訳・追加内訳の明細ボックス（縦幅320px拡張版） */
+    /* 4. 計算内訳明細ボックス（縦幅320px拡張版） */
     .custom-detail-box,
     [class*="custom-detail-box"] {
         max-height: 320px;               
