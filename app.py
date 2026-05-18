@@ -136,17 +136,17 @@ def press_calc(char):
         st.session_state.calc_display = st.session_state.calc_expr
 
 
-# --- サイドバー：照射方法選択 ＆ 計算機 ---
+# --- サイドバー：計算機のみ配置 ---
 with st.sidebar:
     st.header("🧮 ツールメニュー")
     
-    # 1. 簡易計算機（アコーディオン）
+    # 簡易計算機（アコーディオン）
     with st.expander("🧮 簡易計算機を開く", expanded=False):
         st.subheader(f"表示: {st.session_state.calc_display}")
         
         c1, c2, c3, c4 = st.columns(4)
         if c1.button("C", key="c_C"): press_calc("C")
-        if c2.button("⌫", key="c_B"): press_calc("⌫")
+        if c2.button("⌫", key="c_B"): press_calc("0")
         if c3.button("÷", key="c_D"): press_calc("/")
         if c4.button("×", key="c_M"): press_calc("*")
         
@@ -168,17 +168,43 @@ with st.sidebar:
         if c1.button("0", key="c_0"): press_calc("0")
         if c2.button(".", key="c_P"): press_calc(".")
 
-    st.markdown("---")
-    st.subheader("照射方法を選択")
-    methods = [
-        "前立腺VMAT", "全乳房(一連)", "IMRT", "1門照射", 
-        "対向2門", "非対向2門・3門照射", "4門以上・運動・原体照射", "全身照射TBI", 
-        "緩和寡分割", "ケロイド", "肺定位SBRT", "脳定位SRT"
-    ]
-    selected_method = st.radio("メニュー", methods, index=0, label_visibility="collapsed")
 
 # --- メインコンテンツ ---
 st.markdown("## ⚛️ 放射線治療 診療報酬シミュレーター 2026")
+
+# 🌟 メインの照射方法選択エリア（キーボード回避用のラジオボタン配置）
+st.markdown("### 🎯 メイン照射方法の選択")
+m_col1, m_col2 = st.columns(2)
+
+with m_col1:
+    main_group_1 = st.radio(
+        "一連算定・特殊照射項目",
+        ["前立腺VMAT", "全乳房(一連)", "肺定位SBRT", "脳定位SRT", "全身照射TBI", "緩和寡分割"],
+        key="main_g1"
+    )
+
+with m_col2:
+    main_group_2 = st.radio(
+        "通常照射・回数算定項目",
+        ["IMRT", "1門照射", "対向2門", "非対向2門・3門照射", "4門以上・運動・原体照射", "ケロイド"],
+        key="main_g2"
+    )
+
+# どちらのラジオボタンが最後にクリックされたかをセッション状態で判定し、選択された照射方法を確定させるロジック
+if "last_main_method" not in st.session_state:
+    st.session_state.last_main_method = "前立腺VMAT"
+
+# 前回の状態から変化があった方をアクティブとみなす
+if st.session_state.main_g1 != st.session_state.get("prev_g1", "前立腺VMAT"):
+    st.session_state.last_main_method = st.session_state.main_g1
+    st.session_state.prev_g1 = st.session_state.main_g1
+elif st.session_state.main_g2 != st.session_state.get("prev_g2", "IMRT"):
+    st.session_state.last_main_method = st.session_state.main_g2
+    st.session_state.prev_g2 = st.session_state.main_g2
+
+selected_method = st.session_state.last_main_method
+st.markdown(f"選択中のプラン: **{selected_method}**")
+st.markdown("---")
 
 col1, col2 = st.columns([1, 1])
 
@@ -199,7 +225,7 @@ with col1:
     else:
         patient_type = st.radio("患者区分", ["外来", "入院"], index=0, horizontal=True)
 
-    # IGRT区分の表示制御（基本エリアもキーボード回避のためセレクトボックスからラジオボタンに変更）
+    # IGRT区分の表示制御
     no_igrt_list = [
         "1門照射", "対向2門", "非対向2門・3門照射", "ケロイド", "全乳房(一連)",
         "前立腺VMAT", "肺定位SBRT", "脳定位SRT", "全身照射TBI", "緩和寡分割"
@@ -371,7 +397,6 @@ if is_expanded:
             except ValueError:
                 idx_2nd = 0
             
-            # 👇 100%キーボードが出ない st.radio に置き換え
             selected_extra_method = st.radio("照射方法", extra_methods_2nd, index=idx_2nd, key="ex_method_2")
             st.session_state.saved_extra_2nd_method = selected_extra_method
             
@@ -390,7 +415,6 @@ if is_expanded:
             except ValueError:
                 idx_1st = 0
             
-            # 👇 100%キーボードが出ない st.radio に置き換え（項目が多いので縦並びですっきり配置）
             selected_extra_method = st.radio("照射方法", extra_methods_1st, index=idx_1st, key="ex_method_1")
             st.session_state.saved_extra_1st_method = selected_extra_method
             
@@ -408,7 +432,6 @@ if is_expanded:
                 except ValueError:
                     idx_igrt = 0
                 
-                # 👇 IGRT区分も横並びの st.radio に変更
                 extra_igrt = st.radio("1回目 IGRT区分", ["なし", "イ.体表", "ロ.骨構造", "ハ.腫瘍"], index=idx_igrt, horizontal=True, key="ex_igrt_1")
                 st.session_state.saved_extra_1st_igrt = extra_igrt
             else:
