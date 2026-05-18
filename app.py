@@ -8,7 +8,7 @@ st.set_page_config(
 )
 
 # ========================================================
-# 👇 【完全統一版】基本 ＆ 追加エリア両方の文字サイズ極小化CSS
+# 👇 【iPadキーボード対策版】CSS ＆ JavaScript埋め込み
 # ========================================================
 st.markdown("""
     <style>
@@ -54,7 +54,29 @@ st.markdown("""
             color: #000000 !important;
         }
     }
+
+    /* 📱 iPad等でのセレクトボックス強制キーボード非表示対策 */
+    div[data-testid="stSelectbox"] input {
+        inputmode: none !important;      /* モバイルキーボードの起動を抑制 */
+    }
     </style>
+
+    <script>
+    // Streamlitのレンダリング後にセレクトボックスのinput要素からフォーカスを奪うか、
+    // readOnly属性を付与してキーボード立ち上がりを防ぐスクリプト
+    const observer = new MutationObserver(() => {
+        const inputs = document.querySelectorAll('div[data-testid="stSelectbox"] input');
+        inputs.forEach(input => {
+            if (!input.hasAttribute('readonly')) {
+                // 入力不可（選択のみ）にすることでキーボードを阻止
+                input.setAttribute('readonly', 'true');
+                // 元々の選択動作を邪魔しないようにスタイル調整
+                input.style.cursor = 'pointer';
+            }
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    </script>
 """, unsafe_allow_html=True)
 
 # ========================================================
@@ -366,7 +388,6 @@ if is_expanded:
         
         if check_extra_2:
             st.subheader("追加する照射方法 (2回目)")
-            # 前回の選択状態があれば復元、なければ初期値
             try:
                 idx_2nd = extra_methods_2nd.index(st.session_state.saved_extra_2nd_method)
             except ValueError:
@@ -422,7 +443,6 @@ if is_expanded:
     def get_extra_points(method, count, igrt_selection, is_second):
         formula_list_ex = []
         if is_second:
-            # 2回目算定（減算点数マップ）
             pts_map = {"1門照射": 336, "対向2門": 700, "非対向2門・3門照射": 700, "4門以上・運動・原体照射": 700, "ケロイド": 336}
         else:
             pts_map = {
