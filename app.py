@@ -8,24 +8,33 @@ st.set_page_config(
 )
 
 # ========================================================
-# 👇 【iPad完全最適化版】CSS（内訳明細の縦幅を拡張）
+# 👇 【iPad Safari完全防御版】「Manage app」および管理メニューを徹底抹消するCSS
 # ========================================================
 st.markdown("""
     <style>
-    /* 1. 右下の「Manage app」が入っているフローティング要素を制御 */
+    /* 1. 右下の「Manage app」ボタンとその周辺パーツを強制非表示 */
     div[data-testid="stManageAppButton"],
-    #manage-app-button {
+    button[data-testid="stManageAppButton"],
+    #manage-app-button,
+    .stManageAppButton {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
         height: 0 !important;
         width: 0 !important;
+        position: absolute !important;
+        pointer-events: none !important;
     }
     
-    /* 2. 基本内訳・追加内訳、すべての自作ボックスの縦幅を320pxに拡張 */
+    /* 2. 右上のStreamlit標準メニュー（三本線内）から、デプロイや管理に関する項目を隠す追加保険 */
+    footer {
+        visibility: hidden !important;
+    }
+    
+    /* 3. 基本内訳・追加内訳の明細ボックス（縦幅320px拡張版） */
     .custom-detail-box,
     [class*="custom-detail-box"] {
-        max-height: 320px;               /* 縦幅を大きく広げて見やすく調整 */
+        max-height: 320px;               
         overflow-y: auto;
         padding: 12px;
         border-radius: 8px;
@@ -37,7 +46,7 @@ st.markdown("""
         -webkit-touch-callout: none !important;
     }
 
-    /* 3. 🌗 ダークモード（背景黒）のときのボックス色 */
+    /* 4. 🌗 ダークモード（背景黒）のときのボックス色 */
     @media (prefers-color-scheme: dark) {
         .custom-detail-box,
         [class*="custom-detail-box"] {
@@ -46,7 +55,7 @@ st.markdown("""
         }
     }
 
-    /* 4. ☀️ ライトモード（背景白）のときのボックス色 */
+    /* 5. ☀️ ライトモード（背景白）のときのボックス色 */
     @media (prefers-color-scheme: light) {
         .custom-detail-box,
         [class*="custom-detail-box"] {
@@ -60,7 +69,6 @@ st.markdown("""
 # ========================================================
 # セッション状態（データ永続化・記憶用変数）の初期化
 # ========================================================
-# フォルダ選択、お気に入り、予約リストの記憶変数
 if "saved_folder_path" not in st.session_state:
     st.session_state.saved_folder_path = ""
 if "saved_favorites" not in st.session_state:
@@ -98,7 +106,7 @@ outpatient_add_series = ["前立腺VMAT", "全乳房(一連)", "肺定位SBRT", 
 with col1:
     st.subheader("📋 基本入力エリア")
     
-    # メインの照射方法選択（追加エリアとレイアウトを統一した縦並びの st.radio）
+    # 主たる照射方法選択
     methods = [
         "前立腺VMAT", "全乳房(一連)", "IMRT", "1門照射", 
         "対向2門", "非対向2門・3門照射", "4門以上・運動・原体照射", "全身照射TBI", 
@@ -209,9 +217,6 @@ def calculate_base():
             if breath_var == "あり":
                 total_pts += 2400
                 formula.append("・呼吸性移動対策加算(一連): 2,400点")
-        elif append_method == "全身照射TBI":  # 念のため元の判定を維持
-            total_pts += 30000
-            formula.append("・全身照射(一連): 30,000点")
         elif selected_method == "全身照射TBI":
             total_pts += 30000
             formula.append("・全身照射(一連): 30,000点")
@@ -397,7 +402,7 @@ if is_expanded:
                 formula_list_ex.append(f"・追加IGRT({igrt_selection} {extra_igrt_pts}点) × {count}回 = {igrt_total_pts:,}点")
 
             if extra_breath_per_shot > 0:
-                breath_total_pts = breath_per_shot * count
+                breath_total_pts = extra_breath_per_shot * count
                 extra_total_pts += breath_total_pts
                 formula_list_ex.append(f"・{prefix}呼吸性移動対策({extra_breath_per_shot}点) × {count}回 = {breath_total_pts:,}点")
 
