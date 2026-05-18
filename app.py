@@ -146,7 +146,7 @@ with st.sidebar:
         
         c1, c2, c3, c4 = st.columns(4)
         if c1.button("C", key="c_C"): press_calc("C")
-        if c2.button("⌫", key="c_B"): press_calc("0")
+        if c2.button("⌫", key="c_B"): press_calc("⌫")
         if c3.button("÷", key="c_D"): press_calc("/")
         if c4.button("×", key="c_M"): press_calc("*")
         
@@ -172,40 +172,6 @@ with st.sidebar:
 # --- メインコンテンツ ---
 st.markdown("## ⚛️ 放射線治療 診療報酬シミュレーター 2026")
 
-# 🌟 メインの照射方法選択エリア（キーボード回避用のラジオボタン配置）
-st.markdown("### 🎯 メイン照射方法の選択")
-m_col1, m_col2 = st.columns(2)
-
-with m_col1:
-    main_group_1 = st.radio(
-        "一連算定・特殊照射項目",
-        ["前立腺VMAT", "全乳房(一連)", "肺定位SBRT", "脳定位SRT", "全身照射TBI", "緩和寡分割"],
-        key="main_g1"
-    )
-
-with m_col2:
-    main_group_2 = st.radio(
-        "通常照射・回数算定項目",
-        ["IMRT", "1門照射", "対向2門", "非対向2門・3門照射", "4門以上・運動・原体照射", "ケロイド"],
-        key="main_g2"
-    )
-
-# どちらのラジオボタンが最後にクリックされたかをセッション状態で判定し、選択された照射方法を確定させるロジック
-if "last_main_method" not in st.session_state:
-    st.session_state.last_main_method = "前立腺VMAT"
-
-# 前回の状態から変化があった方をアクティブとみなす
-if st.session_state.main_g1 != st.session_state.get("prev_g1", "前立腺VMAT"):
-    st.session_state.last_main_method = st.session_state.main_g1
-    st.session_state.prev_g1 = st.session_state.main_g1
-elif st.session_state.main_g2 != st.session_state.get("prev_g2", "IMRT"):
-    st.session_state.last_main_method = st.session_state.main_g2
-    st.session_state.prev_g2 = st.session_state.main_g2
-
-selected_method = st.session_state.last_main_method
-st.markdown(f"選択中のプラン: **{selected_method}**")
-st.markdown("---")
-
 col1, col2 = st.columns([1, 1])
 
 # 一連算定項目と外来加算対象項目の定義
@@ -214,6 +180,16 @@ outpatient_add_series = ["前立腺VMAT", "全乳房(一連)", "肺定位SBRT", 
 
 with col1:
     st.subheader("📋 基本入力エリア")
+    
+    # 🌟 メインの照射方法選択（追加エリアと完全にレイアウトを統一した縦並びの st.radio）
+    methods = [
+        "前立腺VMAT", "全乳房(一連)", "IMRT", "1門照射", 
+        "対向2門", "非対向2門・3門照射", "4門以上・運動・原体照射", "全身照射TBI", 
+        "緩和寡分割", "ケロイド", "肺定位SBRT", "脳定位SRT"
+    ]
+    selected_method = st.radio("主たる照射方法", methods, index=0, key="main_method_selection")
+    
+    st.markdown("---")
     
     # 負担割合
     ratio_str = st.segmented_control("患者負担割合", ["1割", "2割", "3割"], default="3割")
