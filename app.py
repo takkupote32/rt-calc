@@ -8,7 +8,7 @@ st.set_page_config(
 )
 
 # ========================================================
-# 👇 【iPadキーボード対策版】CSS ＆ JavaScript埋め込み
+# 👇 【iPad完全最適化版】CSS
 # ========================================================
 st.markdown("""
     <style>
@@ -54,29 +54,7 @@ st.markdown("""
             color: #000000 !important;
         }
     }
-
-    /* 📱 iPad等でのセレクトボックス強制キーボード非表示対策 */
-    div[data-testid="stSelectbox"] input {
-        inputmode: none !important;      /* モバイルキーボードの起動を抑制 */
-    }
     </style>
-
-    <script>
-    // Streamlitのレンダリング後にセレクトボックスのinput要素からフォーカスを奪うか、
-    // readOnly属性を付与してキーボード立ち上がりを防ぐスクリプト
-    const observer = new MutationObserver(() => {
-        const inputs = document.querySelectorAll('div[data-testid="stSelectbox"] input');
-        inputs.forEach(input => {
-            if (!input.hasAttribute('readonly')) {
-                // 入力不可（選択のみ）にすることでキーボードを阻止
-                input.setAttribute('readonly', 'true');
-                // 元々の選択動作を邪魔しないようにスタイル調整
-                input.style.cursor = 'pointer';
-            }
-        });
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-    </script>
 """, unsafe_allow_html=True)
 
 # ========================================================
@@ -221,7 +199,7 @@ with col1:
     else:
         patient_type = st.radio("患者区分", ["外来", "入院"], index=0, horizontal=True)
 
-    # IGRT区分の表示制御
+    # IGRT区分の表示制御（基本エリアもキーボード回避のためセレクトボックスからラジオボタンに変更）
     no_igrt_list = [
         "1門照射", "対向2門", "非対向2門・3門照射", "ケロイド", "全乳房(一連)",
         "前立腺VMAT", "肺定位SBRT", "脳定位SRT", "全身照射TBI", "緩和寡分割"
@@ -229,7 +207,7 @@ with col1:
     
     if selected_method not in no_igrt_list:
         default_igrt_idx = 3 if selected_method == "IMRT" else 0
-        igrt_selection = st.selectbox("IGRT区分", ["なし", "イ.体表", "ロ.骨構造", "ハ.腫瘍"], index=default_igrt_idx)
+        igrt_selection = st.radio("IGRT区分", ["なし", "イ.体表", "ロ.骨構造", "ハ.腫瘍"], index=default_igrt_idx, horizontal=True)
     else:
         igrt_selection = "なし"
 
@@ -392,14 +370,15 @@ if is_expanded:
                 idx_2nd = extra_methods_2nd.index(st.session_state.saved_extra_2nd_method)
             except ValueError:
                 idx_2nd = 0
-            selected_extra_method = st.selectbox("照射方法", extra_methods_2nd, index=idx_2nd, key="ex_method_2")
+            
+            # 👇 100%キーボードが出ない st.radio に置き換え
+            selected_extra_method = st.radio("照射方法", extra_methods_2nd, index=idx_2nd, key="ex_method_2")
             st.session_state.saved_extra_2nd_method = selected_extra_method
             
             extra_count = st.number_input("2回目 照射回数:", min_value=1, value=int(st.session_state.saved_extra_2nd_count), step=1, key="ex_count_2")
             st.session_state.saved_extra_2nd_count = extra_count
             extra_igrt = "なし" 
             
-            # 2回目の呼吸移動対策フレーム制限
             extra_breath_var = "なし"
             if selected_extra_method in ["非対向2門・3門照射", "4門以上・運動・原体照射"]:
                 extra_breath_var = st.segmented_control("追加 呼吸性移動対策", ["なし", "あり"], default=st.session_state.saved_extra_2nd_breath, key="ex_breath_2")
@@ -410,10 +389,11 @@ if is_expanded:
                 idx_1st = extra_methods_1st.index(st.session_state.saved_extra_1st_method)
             except ValueError:
                 idx_1st = 0
-            selected_extra_method = st.selectbox("照射方法", extra_methods_1st, index=idx_1st, key="ex_method_1")
+            
+            # 👇 100%キーボードが出ない st.radio に置き換え（項目が多いので縦並びですっきり配置）
+            selected_extra_method = st.radio("照射方法", extra_methods_1st, index=idx_1st, key="ex_method_1")
             st.session_state.saved_extra_1st_method = selected_extra_method
             
-            # 一連算定項目の場合は回数固定の制御
             if selected_extra_method in one_series_methods:
                 st.text_input("1回目 照射回数:", value="1 (一連算定のため固定)", disabled=True)
                 extra_count = 1
@@ -422,18 +402,18 @@ if is_expanded:
                 extra_count = st.number_input("1回目 照射回数:", min_value=1, value=int(st.session_state.saved_extra_1st_count), step=1, key="ex_count_1")
                 st.session_state.saved_extra_1st_count = extra_count
             
-            # 1回目追加のIGRT制御
             if selected_extra_method not in no_igrt_list:
                 try:
                     idx_igrt = ["なし", "イ.体表", "ロ.骨構造", "ハ.腫瘍"].index(st.session_state.saved_extra_1st_igrt)
                 except ValueError:
                     idx_igrt = 0
-                extra_igrt = st.selectbox("1回目 IGRT区分", ["なし", "イ.体表", "ロ.骨構造", "ハ.腫瘍"], index=idx_igrt, key="ex_igrt_1")
+                
+                # 👇 IGRT区分も横並びの st.radio に変更
+                extra_igrt = st.radio("1回目 IGRT区分", ["なし", "イ.体表", "ロ.骨構造", "ハ.腫瘍"], index=idx_igrt, horizontal=True, key="ex_igrt_1")
                 st.session_state.saved_extra_1st_igrt = extra_igrt
             else:
                 extra_igrt = "なし"
 
-            # 1回目の呼吸移動対策フレーム制限
             extra_breath_var = "なし"
             if selected_extra_method in ["IMRT", "非対向2門・3門照射", "4門以上・運動・原体照射"]:
                 extra_breath_var = st.segmented_control("追加 呼吸性移動対策", ["なし", "あり"], default=st.session_state.saved_extra_1st_breath, key="ex_breath_1")
