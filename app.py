@@ -1,6 +1,6 @@
 import streamlit as st
 
-# ページ全体の基本設定（ダークモード風のスタイル調整用）
+# ページ全体の基本設定
 st.set_page_config(
     page_title="放射線治療 診療報酬シミュレーター 2026",
     page_icon="⚛️",
@@ -25,12 +25,13 @@ st.markdown("""
     /* 2. 基本内訳・追加内訳、すべての自作ボックスを共通で小さくする */
     .custom-detail-box,
     [class*="custom-detail-box"] {
-        max-height: 160px;
+        max-height: 180px;
         overflow-y: auto;
         padding: 12px;
         border-radius: 8px;
         font-size: 13px !important;       /* 文字を読みやすい通常サイズに固定 */
         line-height: 1.4 !important;      /* 行間をスッキリ詰める */
+        font-family: 'Consolas', monospace !important;
         user-select: none !important;
         -webkit-user-select: none !important;
         -webkit-touch-callout: none !important;
@@ -55,20 +56,40 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
 # ========================================================
-# 👆 上書きここまで
+# セッション状態（データ永続化・記憶用変数）の初期化
 # ========================================================
-
-
-
-
-
-
-# 簡易計算機のロジック用セッション状態初期化
 if "calc_expr" not in st.session_state:
     st.session_state.calc_expr = ""
 if "calc_display" not in st.session_state:
     st.session_state.calc_display = "0"
+
+# フォルダ選択、お気に入り、予約リストの記憶変数
+if "saved_folder_path" not in st.session_state:
+    st.session_state.saved_folder_path = ""
+if "saved_favorites" not in st.session_state:
+    st.session_state.saved_favorites = []
+if "saved_reservation_list" not in st.session_state:
+    st.session_state.saved_reservation_list = []
+
+# 追加エリア（1回目・2回目）の入力状態保持用
+if "saved_extra_1st_method" not in st.session_state:
+    st.session_state.saved_extra_1st_method = "IMRT"
+if "saved_extra_1st_count" not in st.session_state:
+    st.session_state.saved_extra_1st_count = 1
+if "saved_extra_1st_igrt" not in st.session_state:
+    st.session_state.saved_extra_1st_igrt = "ハ.腫瘍"
+if "saved_extra_1st_breath" not in st.session_state:
+    st.session_state.saved_extra_1st_breath = "なし"
+
+if "saved_extra_2nd_method" not in st.session_state:
+    st.session_state.saved_extra_2nd_method = "1門照射"
+if "saved_extra_2nd_count" not in st.session_state:
+    st.session_state.saved_extra_2nd_count = 1
+if "saved_extra_2nd_breath" not in st.session_state:
+    st.session_state.saved_extra_2nd_breath = "なし"
+
 
 # --- 簡易計算機関数の定義 ---
 def press_calc(char):
@@ -85,19 +106,23 @@ def press_calc(char):
     elif char == "=":
         try:
             if st.session_state.calc_expr:
-                # 簡易的な四則演算評価
-                result = str(eval(st.session_state.calc_expr))
-                if result.endswith(".0"):
-                    result = result[:-2]
-                try:
-                    st.session_state.calc_display = f"{float(result):,.0f}" if result.replace(".","",1).isdigit() else result
-                except:
-                    st.session_state.calc_display = result
-                st.session_state.calc_expr = result
+                calc_expr = st.session_state.calc_expr.replace("×", "*").replace("÷", "/")
+                result_num = eval(calc_expr)
+                
+                if isinstance(result_num, float) and result_num.is_integer():
+                    result_num = int(result_num)
+                    
+                if isinstance(result_num, int):
+                    result = f"{result_num:,}"
+                else:
+                    result = f"{result_num:,.6f}".rstrip('0').rstrip('.')
+                    
+                st.session_state.calc_display = result
+                st.session_state.calc_expr = str(result_num)
         except ZeroDivisionError:
             st.session_state.calc_display = "Error: 0除算"
             st.session_state.calc_expr = ""
-        except:
+        except Exception:
             st.session_state.calc_display = "Error"
             st.session_state.calc_expr = ""
     else:
@@ -110,20 +135,20 @@ def press_calc(char):
             st.session_state.calc_expr += str(char)
         st.session_state.calc_display = st.session_state.calc_expr
 
+
 # --- サイドバー：照射方法選択 ＆ 計算機 ---
 with st.sidebar:
     st.header("🧮 ツールメニュー")
     
     # 1. 簡易計算機（アコーディオン）
     with st.expander("🧮 簡易計算機を開く", expanded=False):
-        st.subheader(f"Display: {st.session_state.calc_display}")
+        st.subheader(f"表示: {st.session_state.calc_display}")
         
-        # ボタン配置用のグリッド
         c1, c2, c3, c4 = st.columns(4)
         if c1.button("C", key="c_C"): press_calc("C")
         if c2.button("⌫", key="c_B"): press_calc("⌫")
-        if c3.button("/", key="c_D"): press_calc("/")
-        if c4.button("*", key="c_M"): press_calc("*")
+        if c3.button("÷", key="c_D"): press_calc("/")
+        if c4.button("×", key="c_M"): press_calc("*")
         
         if c1.button("7", key="c_7"): press_calc("7")
         if c2.button("8", key="c_8"): press_calc("8")
@@ -150,13 +175,16 @@ with st.sidebar:
         "対向2門", "非対向2門・3門照射", "4門以上・運動・原体照射", "全身照射TBI", 
         "緩和寡分割", "ケロイド", "肺定位SBRT", "脳定位SRT"
     ]
-    # デフォルトを「前立腺VMAT」に
     selected_method = st.radio("メニュー", methods, index=0, label_visibility="collapsed")
 
 # --- メインコンテンツ ---
 st.markdown("## ⚛️ 放射線治療 診療報酬シミュレーター 2026")
 
 col1, col2 = st.columns([1, 1])
+
+# 一連算定項目と外来加算対象項目の定義
+one_series_methods = ["前立腺VMAT", "全乳房(一連)", "肺定位SBRT", "脳定位SRT", "全身照射TBI", "緩和寡分割"]
+outpatient_add_series = ["前立腺VMAT", "全乳房(一連)", "肺定位SBRT", "脳定位SRT", "緩和寡分割"]
 
 with col1:
     st.subheader("📋 基本入力エリア")
@@ -165,11 +193,13 @@ with col1:
     ratio_str = st.segmented_control("患者負担割合", ["1割", "2割", "3割"], default="3割")
     ratio = int(ratio_str.replace("割", "")) if ratio_str else 3
 
-    # 患者区分（脳定位SRTの場合は自動で入院にする制御を考慮）
-    default_patient_idx = 1 if selected_method == "脳定位SRT" else 0
-    patient_type = st.radio("患者区分", ["外来", "入院"], index=default_patient_idx, horizontal=True)
+    # 患者区分の制御 (脳定位SRTの場合は自動で入院に固定)
+    if selected_method == "脳定位SRT":
+        patient_type = st.radio("患者区分", ["外来", "入院"], index=1, disabled=True)
+    else:
+        patient_type = st.radio("患者区分", ["外来", "入院"], index=0, horizontal=True)
 
-    # IGRT区分 (表示制御用)
+    # IGRT区分の表示制御
     no_igrt_list = [
         "1門照射", "対向2門", "非対向2門・3門照射", "ケロイド", "全乳房(一連)",
         "前立腺VMAT", "肺定位SBRT", "脳定位SRT", "全身照射TBI", "緩和寡分割"
@@ -181,29 +211,28 @@ with col1:
     else:
         igrt_selection = "なし"
 
-    # 動的フレーム要素のシミュレート
+    # 固定器具加算フレーム
     grid_fix_list = ["前立腺VMAT", "IMRT", "1門照射", "対向2門", "非対向2門・3門照射", "4門以上・運動・原体照射", "ケロイド"]
     default_fix = "作成あり" if selected_method == "前立腺VMAT" else "なし"
     fix_var = "なし"
     if selected_method in grid_fix_list:
         fix_var = st.segmented_control("体外照射用固定器具", ["なし", "作成あり"], default=default_fix)
 
+    # 呼吸性移動対策フレーム
     breath_var = "なし"
-    if selected_method in ["IMRT", "肺定位SBRT", "全乳房(一連)"]:
+    if selected_method in ["IMRT", "肺定位SBRT", "全乳房(一連)", "非対向2門・3門照射", "4門以上・運動・原体照射"]:
         breath_var = st.segmented_control("呼吸性移動対策", ["なし", "あり"], default="なし")
 
+    # 全乳房専用IGRTフレーム
     breast_igrt_var = "なし"
     if selected_method == "全乳房(一連)":
         breast_igrt_var = st.segmented_control("IGRT(一連2400点)", ["なし", "あり"], default="なし")
 
     # 回数入力の制御
-    one_series_methods = ["前立腺VMAT", "全乳房(一連)", "肺定位SBRT", "脳定位SRT", "全身照射TBI", "緩和寡分割"]
-    outpatient_add_series = ["前立腺VMAT", "全乳房(一連)", "肺定位SBRT", "脳定位SRT", "緩和寡分割"]
-
-    count = 0
+    count = 1
     if selected_method not in one_series_methods or (selected_method in outpatient_add_series and patient_type == "外来"):
         lbl_text = "外来治療回数 (加算用):" if selected_method in one_series_methods else "合計照射回数:"
-        count = st.number_input(lbl_text, min_value=0, value=1, step=1)
+        count = st.number_input(lbl_text, min_value=1, value=1, step=1)
     
     if selected_method in one_series_methods:
         st.info(f"💡 {selected_method} は一連算定項目です")
@@ -213,7 +242,7 @@ def calculate_base():
     formula = []
     total_pts = 0
     exclude_m000 = ["肺定位SBRT", "脳定位SRT", "全身照射TBI", "緩和寡分割"]
-    
+   
     if selected_method in exclude_m000:
         formula.append("・管理料(M000): 0点 (一連に含む)")
     else:
@@ -283,7 +312,7 @@ def calculate_base():
         igrt_pts = igrt_map.get(igrt_selection, 0)
 
         breath_per_shot = 0
-        if selected_method == "IMRT" and breath_var == "あり":
+        if selected_method in ["IMRT", "非対向2門・3門照射", "4門以上・運動・原体照射"] and breath_var == "あり":
             breath_per_shot = 150
     
         total_pts += (base + igrt_pts + breath_per_shot) * count
@@ -313,9 +342,6 @@ with col2:
     html_text = full_formula_text.replace('\n', '<br>')
     st.html(f'<div class="custom-detail-box">{html_text}</div>')
 
-    
-    
-
     st.warning("⚠️ ※外来の場合、「外来放射線診療料（診察代）」が別途加算されます。\n\n※治療の進行状況やプラン変更により実際と異なる場合があります。")
 
 st.markdown("---")
@@ -340,29 +366,63 @@ if is_expanded:
         
         if check_extra_2:
             st.subheader("追加する照射方法 (2回目)")
-            selected_extra_method = st.selectbox("照射方法", extra_methods_2nd, key="ex_method_2")
-            extra_count = st.number_input("2回目 照射回数:", min_value=0, value=1, step=1, key="ex_count_2")
-            extra_igrt = "なし" # 2回目はなし固定
+            # 前回の選択状態があれば復元、なければ初期値
+            try:
+                idx_2nd = extra_methods_2nd.index(st.session_state.saved_extra_2nd_method)
+            except ValueError:
+                idx_2nd = 0
+            selected_extra_method = st.selectbox("照射方法", extra_methods_2nd, index=idx_2nd, key="ex_method_2")
+            st.session_state.saved_extra_2nd_method = selected_extra_method
+            
+            extra_count = st.number_input("2回目 照射回数:", min_value=1, value=int(st.session_state.saved_extra_2nd_count), step=1, key="ex_count_2")
+            st.session_state.saved_extra_2nd_count = extra_count
+            extra_igrt = "なし" 
+            
+            # 2回目の呼吸移動対策フレーム制限
+            extra_breath_var = "なし"
+            if selected_extra_method in ["非対向2門・3門照射", "4門以上・運動・原体照射"]:
+                extra_breath_var = st.segmented_control("追加 呼吸性移動対策", ["なし", "あり"], default=st.session_state.saved_extra_2nd_breath, key="ex_breath_2")
+                st.session_state.saved_extra_2nd_breath = extra_breath_var
         else:
             st.subheader("追加する照射方法 (1回目)")
-            selected_extra_method = st.selectbox("照射方法", extra_methods_1st, key="ex_method_1")
+            try:
+                idx_1st = extra_methods_1st.index(st.session_state.saved_extra_1st_method)
+            except ValueError:
+                idx_1st = 0
+            selected_extra_method = st.selectbox("照射方法", extra_methods_1st, index=idx_1st, key="ex_method_1")
+            st.session_state.saved_extra_1st_method = selected_extra_method
             
             # 一連算定項目の場合は回数固定の制御
             if selected_extra_method in one_series_methods:
-                st.disabled_text = st.text_input("1回目 照射回数:", value="1 (一連算定のため固定)", disabled=True)
+                st.text_input("1回目 照射回数:", value="1 (一連算定のため固定)", disabled=True)
                 extra_count = 1
+                st.session_state.saved_extra_1st_count = 1
             else:
-                extra_count = st.number_input("1回目 照射回数:", min_value=0, value=1, step=1, key="ex_count_1")
+                extra_count = st.number_input("1回目 照射回数:", min_value=1, value=int(st.session_state.saved_extra_1st_count), step=1, key="ex_count_1")
+                st.session_state.saved_extra_1st_count = extra_count
             
+            # 1回目追加のIGRT制御
             if selected_extra_method not in no_igrt_list:
-                extra_igrt = st.selectbox("1回目 IGRT区分", ["なし", "イ.体表", "ロ.骨構造", "ハ.腫瘍"], key="ex_igrt_1")
+                try:
+                    idx_igrt = ["なし", "イ.体表", "ロ.骨構造", "ハ.腫瘍"].index(st.session_state.saved_extra_1st_igrt)
+                except ValueError:
+                    idx_igrt = 0
+                extra_igrt = st.selectbox("1回目 IGRT区分", ["なし", "イ.体表", "ロ.骨構造", "ハ.腫瘍"], index=idx_igrt, key="ex_igrt_1")
+                st.session_state.saved_extra_1st_igrt = extra_igrt
             else:
                 extra_igrt = "なし"
+
+            # 1回目の呼吸移動対策フレーム制限
+            extra_breath_var = "なし"
+            if selected_extra_method in ["IMRT", "非対向2門・3門照射", "4門以上・運動・原体照射"]:
+                extra_breath_var = st.segmented_control("追加 呼吸性移動対策", ["なし", "あり"], default=st.session_state.saved_extra_1st_breath, key="ex_breath_1")
+                st.session_state.saved_extra_1st_breath = extra_breath_var
 
     # 追加分の点数計算ロジック
     def get_extra_points(method, count, igrt_selection, is_second):
         formula_list_ex = []
         if is_second:
+            # 2回目算定（減算点数マップ）
             pts_map = {"1門照射": 336, "対向2門": 700, "非対向2門・3門照射": 700, "4門以上・運動・原体照射": 700, "ケロイド": 336}
         else:
             pts_map = {
@@ -398,6 +458,14 @@ if is_expanded:
             igrt_map = {"なし": 0, "イ.体表": 150, "ロ.骨構造": 300, "ハ.腫瘍": 450}
             extra_igrt_pts = igrt_map.get(igrt_selection, 0)
             
+            extra_breath_per_shot = 0
+            if is_second:
+                if method in ["非対向2門・3門照射", "4門以上・運動・原体照射"] and extra_breath_var == "あり":
+                    extra_breath_per_shot = 150
+            else:
+                if method in ["IMRT", "非対向2門・3門照射", "4門以上・運動・原体照射"] and extra_breath_var == "あり":
+                    extra_breath_per_shot = 150
+
             shot_pts = extra_base_pts * count
             extra_total_pts += shot_pts
             
@@ -408,6 +476,11 @@ if is_expanded:
                 igrt_total_pts = extra_igrt_pts * count
                 extra_total_pts += igrt_total_pts
                 formula_list_ex.append(f"・追加IGRT({igrt_selection} {extra_igrt_pts}点) × {count}回 = {igrt_total_pts:,}点")
+
+            if extra_breath_per_shot > 0:
+                breath_total_pts = extra_breath_per_shot * count
+                extra_total_pts += breath_total_pts
+                formula_list_ex.append(f"・{prefix}呼吸性移動対策({extra_breath_per_shot}点) × {count}回 = {breath_total_pts:,}点")
 
         if not is_second and patient_type == "外来" and method != "ケロイド" and method not in one_series_methods:
             extra_outpatient_pts = count * 100
@@ -433,9 +506,6 @@ if is_expanded:
         ex_html_text = ex_full_txt.replace('\n', '<br>')
         st.html(f'<div class="custom-detail-box">{ex_html_text}</div>')
 
-        
-        
-        
         # 総合計の大きなカード風表示
         st.markdown("---")
         if check_extra_2:
