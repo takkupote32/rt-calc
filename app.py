@@ -8,11 +8,11 @@ st.set_page_config(
 )
 
 # ========================================================
-# 👇 【iPad Safari完全防御版】「Manage app」および管理メニューを徹底抹消するCSS
+# 👇 【完全版】下部のフッター帯・Fullscreen・Manage appを徹底抹消するCSS
 # ========================================================
 st.markdown("""
     <style>
-    /* 1. 右下の「Manage app」ボタンとその周辺パーツを強制非表示 */
+    /* 1. 右下の「Manage app」ボタンを非表示 */
     div[data-testid="stManageAppButton"],
     button[data-testid="stManageAppButton"],
     #manage-app-button,
@@ -22,16 +22,20 @@ st.markdown("""
         opacity: 0 !important;
         height: 0 !important;
         width: 0 !important;
-        position: absolute !important;
-        pointer-events: none !important;
     }
     
-    /* 2. 右上のStreamlit標準メニュー（三本線内）から、デプロイや管理に関する項目を隠す追加保険 */
-    footer {
+    /* 2. 「Built with Streamlit」や「Fullscreen」が入っている最下部の帯を丸ごと消去 */
+    footer,
+    .stAppDecoration,
+    div[data-testid="stFooter"],
+    footer a {
+        display: none !important;
         visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
     }
     
-    /* 3. 基本内訳・追加内訳の明細ボックス（縦幅320px拡張版） */
+    /* 3. 計算内訳明細ボックス（縦幅320px拡張版） */
     .custom-detail-box,
     [class*="custom-detail-box"] {
         max-height: 320px;               
@@ -46,7 +50,7 @@ st.markdown("""
         -webkit-touch-callout: none !important;
     }
 
-    /* 4. 🌗 ダークモード（背景黒）のときのボックス色 */
+    /* 🌗 ダークモード（背景黒）のときのボックス色 */
     @media (prefers-color-scheme: dark) {
         .custom-detail-box,
         [class*="custom-detail-box"] {
@@ -55,7 +59,7 @@ st.markdown("""
         }
     }
 
-    /* 5. ☀️ ライトモード（背景白）のときのボックス色 */
+    /* ☀️ ライトモード（背景白）のときのボックス色 */
     @media (prefers-color-scheme: light) {
         .custom-detail-box,
         [class*="custom-detail-box"] {
