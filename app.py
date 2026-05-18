@@ -8,7 +8,7 @@ st.set_page_config(
 )
 
 # ========================================================
-# 👇 【iPad完全最適化版】CSS
+# 👇 【iPad完全最適化版】CSS（内訳明細の縦幅を拡張）
 # ========================================================
 st.markdown("""
     <style>
@@ -22,15 +22,15 @@ st.markdown("""
         width: 0 !important;
     }
     
-    /* 2. 基本内訳・追加内訳、すべての自作ボックスを共通で小さくする */
+    /* 2. 基本内訳・追加内訳、すべての自作ボックスの縦幅を320pxに拡張 */
     .custom-detail-box,
     [class*="custom-detail-box"] {
-        max-height: 180px;
+        max-height: 320px;               /* 縦幅を大きく広げて見やすく調整 */
         overflow-y: auto;
         padding: 12px;
         border-radius: 8px;
-        font-size: 13px !important;       /* 文字を読みやすい通常サイズに固定 */
-        line-height: 1.4 !important;      /* 行間をスッキリ詰める */
+        font-size: 13px !important;       
+        line-height: 1.4 !important;      
         font-family: 'Consolas', monospace !important;
         user-select: none !important;
         -webkit-user-select: none !important;
@@ -60,11 +60,6 @@ st.markdown("""
 # ========================================================
 # セッション状態（データ永続化・記憶用変数）の初期化
 # ========================================================
-if "calc_expr" not in st.session_state:
-    st.session_state.calc_expr = ""
-if "calc_display" not in st.session_state:
-    st.session_state.calc_display = "0"
-
 # フォルダ選択、お気に入り、予約リストの記憶変数
 if "saved_folder_path" not in st.session_state:
     st.session_state.saved_folder_path = ""
@@ -91,84 +86,6 @@ if "saved_extra_2nd_breath" not in st.session_state:
     st.session_state.saved_extra_2nd_breath = "なし"
 
 
-# --- 簡易計算機関数の定義 ---
-def press_calc(char):
-    if char == "C":
-        st.session_state.calc_expr = ""
-        st.session_state.calc_display = "0"
-    elif char == "⌫":
-        if "Error" in st.session_state.calc_display:
-            st.session_state.calc_expr = ""
-            st.session_state.calc_display = "0"
-        else:
-            st.session_state.calc_expr = st.session_state.calc_expr[:-1]
-            st.session_state.calc_display = st.session_state.calc_expr if st.session_state.calc_expr else "0"
-    elif char == "=":
-        try:
-            if st.session_state.calc_expr:
-                calc_expr = st.session_state.calc_expr.replace("×", "*").replace("÷", "/")
-                result_num = eval(calc_expr)
-                
-                if isinstance(result_num, float) and result_num.is_integer():
-                    result_num = int(result_num)
-                    
-                if isinstance(result_num, int):
-                    result = f"{result_num:,}"
-                else:
-                    result = f"{result_num:,.6f}".rstrip('0').rstrip('.')
-                    
-                st.session_state.calc_display = result
-                st.session_state.calc_expr = str(result_num)
-        except ZeroDivisionError:
-            st.session_state.calc_display = "Error: 0除算"
-            st.session_state.calc_expr = ""
-        except Exception:
-            st.session_state.calc_display = "Error"
-            st.session_state.calc_expr = ""
-    else:
-        if "Error" in st.session_state.calc_display:
-            st.session_state.calc_expr = ""
-        
-        if st.session_state.calc_expr == "" and char.isdigit() and char != "0":
-            st.session_state.calc_expr = str(char)
-        else:
-            st.session_state.calc_expr += str(char)
-        st.session_state.calc_display = st.session_state.calc_expr
-
-
-# --- サイドバー：計算機のみ配置 ---
-with st.sidebar:
-    st.header("🧮 ツールメニュー")
-    
-    # 簡易計算機（アコーディオン）
-    with st.expander("🧮 簡易計算機を開く", expanded=False):
-        st.subheader(f"表示: {st.session_state.calc_display}")
-        
-        c1, c2, c3, c4 = st.columns(4)
-        if c1.button("C", key="c_C"): press_calc("C")
-        if c2.button("⌫", key="c_B"): press_calc("⌫")
-        if c3.button("÷", key="c_D"): press_calc("/")
-        if c4.button("×", key="c_M"): press_calc("*")
-        
-        if c1.button("7", key="c_7"): press_calc("7")
-        if c2.button("8", key="c_8"): press_calc("8")
-        if c3.button("9", key="c_9"): press_calc("9")
-        if c4.button("-", key="c_S"): press_calc("-")
-        
-        if c1.button("4", key="c_4"): press_calc("4")
-        if c2.button("5", key="c_5"): press_calc("5")
-        if c3.button("6", key="c_6"): press_calc("6")
-        if c4.button("+", key="c_A"): press_calc("+")
-        
-        if c1.button("1", key="c_1"): press_calc("1")
-        if c2.button("2", key="c_2"): press_calc("2")
-        if c3.button("3", key="c_3"): press_calc("3")
-        if c4.button("=", key="c_E"): press_calc("=")
-        
-        if c1.button("0", key="c_0"): press_calc("0")
-        if c2.button(".", key="c_P"): press_calc(".")
-
-
 # --- メインコンテンツ ---
 st.markdown("## ⚛️ 放射線治療 診療報酬シミュレーター 2026")
 
@@ -181,7 +98,7 @@ outpatient_add_series = ["前立腺VMAT", "全乳房(一連)", "肺定位SBRT", 
 with col1:
     st.subheader("📋 基本入力エリア")
     
-    # 🌟 メインの照射方法選択（追加エリアと完全にレイアウトを統一した縦並びの st.radio）
+    # メインの照射方法選択（追加エリアとレイアウトを統一した縦並びの st.radio）
     methods = [
         "前立腺VMAT", "全乳房(一連)", "IMRT", "1門照射", 
         "対向2門", "非対向2門・3門照射", "4門以上・運動・原体照射", "全身照射TBI", 
@@ -292,6 +209,9 @@ def calculate_base():
             if breath_var == "あり":
                 total_pts += 2400
                 formula.append("・呼吸性移動対策加算(一連): 2,400点")
+        elif append_method == "全身照射TBI":  # 念のため元の判定を維持
+            total_pts += 30000
+            formula.append("・全身照射(一連): 30,000点")
         elif selected_method == "全身照射TBI":
             total_pts += 30000
             formula.append("・全身照射(一連): 30,000点")
@@ -477,7 +397,7 @@ if is_expanded:
                 formula_list_ex.append(f"・追加IGRT({igrt_selection} {extra_igrt_pts}点) × {count}回 = {igrt_total_pts:,}点")
 
             if extra_breath_per_shot > 0:
-                breath_total_pts = extra_breath_per_shot * count
+                breath_total_pts = breath_per_shot * count
                 extra_total_pts += breath_total_pts
                 formula_list_ex.append(f"・{prefix}呼吸性移動対策({extra_breath_per_shot}点) × {count}回 = {breath_total_pts:,}点")
 
