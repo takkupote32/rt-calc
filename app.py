@@ -38,7 +38,7 @@ st.markdown("""
     /* 3. 計算内訳明細ボックス（縦幅320px拡張版） */
     .custom-detail-box,
     [class*="custom-detail-box"] {
-        max-height: 320px;               
+        max-height: 320px;
         overflow-y: auto;
         padding: 12px;
         border-radius: 8px;
@@ -105,7 +105,8 @@ col1, col2 = st.columns([1, 1])
 
 # 一連算定項目と外来加算対象項目の定義
 one_series_methods = ["前立腺VMAT", "全乳房(一連)", "肺定位SBRT", "脳定位SRT", "全身照射TBI", "緩和寡分割"]
-outpatient_add_series = ["前立腺VMAT", "全乳房(一連)", "肺定位SBRT", "脳定位SRT", "緩和寡分割"]
+# 加算対象を「前立腺VMAT」と「全乳房(一連)」のみに限定
+outpatient_add_series = ["前立腺VMAT", "全乳房(一連)"]
 
 with col1:
     st.subheader("📋 基本入力エリア")
@@ -228,10 +229,13 @@ def calculate_base():
             total_pts += 8000
             formula.append("・緩和寡分割(一連): 8,000点")
         
+        # 肺定位SBRT、脳定位SRT、緩和寡分割、全身照射TBIは外来加算0点（対象外明記）
         if patient_type == "外来" and selected_method in outpatient_add_series:
             outpatient_pts = count * 100
             total_pts += outpatient_pts
             formula.append(f"・外来放射線治療加算(100点) × {count}回: {outpatient_pts:,}点")
+        elif patient_type == "外来" and selected_method in ["肺定位SBRT", "脳定位SRT", "緩和寡分割", "全身照射TBI"]:
+            formula.append("・外来放射線治療加算: 0点 (対象外項目)")
     else:
         if selected_method == "IMRT": base = 3000
         elif "4門以上・運動・原体照射" in selected_method: base = 1750
@@ -269,7 +273,7 @@ with col2:
     
     # 計算内訳の表示
     full_formula_text = "\n".join(formula_list) + f"\n----------------------------\n合計点数: {base_pts:,} 点\n計算式: {base_pts:,}点 × 10円 × {ratio/10} = ¥{final_pay:,.0f}"
-    st.caption("📋 計算内訳明細")
+    st.caption("📋 計算内訳明謝")
     html_text = full_formula_text.replace('\n', '<br>')
     st.html(f'<div class="custom-detail-box">{html_text}</div>')
 
@@ -319,14 +323,18 @@ if is_expanded:
                 idx_1st = extra_methods_1st.index(st.session_state.saved_extra_1st_method)
             except ValueError:
                 idx_1st = 0
-            
+           
             selected_extra_method = st.radio("照射方法", extra_methods_1st, index=idx_1st, key="ex_method_1")
             st.session_state.saved_extra_1st_method = selected_extra_method
             
             if selected_extra_method in one_series_methods:
-                st.text_input("1回目 照射回数:", value="1 (一連算定のため固定)", disabled=True)
-                extra_count = 1
-                st.session_state.saved_extra_1st_count = 1
+                if selected_extra_method in outpatient_add_series and patient_type == "外来":
+                    extra_count = st.number_input("1回目 外来治療回数 (加算用):", min_value=1, value=int(st.session_state.saved_extra_1st_count), step=1, key="ex_count_1")
+                    st.session_state.saved_extra_1st_count = extra_count
+                else:
+                    st.text_input("1回目 照射回数:", value="1 (一連算定のため固定)", disabled=True)
+                    extra_count = 1
+                    st.session_state.saved_extra_1st_count = 1
             else:
                 extra_count = st.number_input("1回目 照射回数:", min_value=1, value=int(st.session_state.saved_extra_1st_count), step=1, key="ex_count_1")
                 st.session_state.saved_extra_1st_count = extra_count
@@ -336,7 +344,7 @@ if is_expanded:
                     idx_igrt = ["なし", "イ.体表", "ロ.骨構造", "ハ.腫瘍"].index(st.session_state.saved_extra_1st_igrt)
                 except ValueError:
                     idx_igrt = 0
-                
+  
                 extra_igrt = st.radio("1回目 IGRT区分", ["なし", "イ.体表", "ロ.骨構造", "ハ.腫瘍"], index=idx_igrt, horizontal=True, key="ex_igrt_1")
                 st.session_state.saved_extra_1st_igrt = extra_igrt
             else:
@@ -382,6 +390,15 @@ if is_expanded:
             else:
                 prefix = "2回目" if is_second else "追加"
                 formula_list_ex.append(f"・{prefix}照射({method}): {extra_base_pts:,}点")
+            
+            # 追加シミュレーション側でも3項目は外来加算を0点（対象外）とする
+            if not is_second and patient_type == "外来":
+                if method in outpatient_add_series:
+                    extra_outpatient_pts = count * 100
+                    extra_total_pts += extra_outpatient_pts
+                    formula_list_ex.append(f"・追加外来放射線治療加算(100点) × {count}回: {extra_outpatient_pts:,}点")
+                elif method in ["肺定位SBRT", "脳定位SRT", "緩和寡分割", "全身照射TBI"]:
+                    formula_list_ex.append("・追加外来放射線治療加算: 0点 (対象外項目)")
         else:
             igrt_map = {"なし": 0, "イ.体表": 150, "ロ.骨構造": 300, "ハ.腫瘍": 450}
             extra_igrt_pts = igrt_map.get(igrt_selection, 0)
@@ -410,10 +427,10 @@ if is_expanded:
                 extra_total_pts += breath_total_pts
                 formula_list_ex.append(f"・{prefix}呼吸性移動対策({extra_breath_per_shot}点) × {count}回 = {breath_total_pts:,}点")
 
-        if not is_second and patient_type == "外来" and method != "ケロイド" and method not in one_series_methods:
-            extra_outpatient_pts = count * 100
-            extra_total_pts += extra_outpatient_pts
-            formula_list_ex.append(f"・追加外来放射線治療加算(100点) × {count}回: {extra_outpatient_pts:,}点")
+            if not is_second and patient_type == "外来" and method != "ケロイド":
+                extra_outpatient_pts = count * 100
+                extra_total_pts += extra_outpatient_pts
+                formula_list_ex.append(f"・追加外来放射線治療加算(100点) × {count}回: {extra_outpatient_pts:,}点")
 
         return extra_total_pts, formula_list_ex
 
